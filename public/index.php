@@ -24,6 +24,9 @@ $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 use SalveAlimento\Controllers\AuthController;
+use SalveAlimento\Controllers\DoacaoController;
+use SalveAlimento\Controllers\SolicitacaoController;
+use SalveAlimento\Controllers\AdminController;
 
 match (true) {
     $uri === '/' || $uri === '/index.php'
@@ -38,16 +41,29 @@ match (true) {
     $uri === '/recuperar-senha' => AuthController::recuperarSenha(),
     $uri === '/redefinir-senha' => AuthController::redefinirSenha(),
 
-    // Painel doador (Fase 6)
-    $uri === '/painel'          => include __DIR__ . '/../src/Views/doador/painel.php',
-    $uri === '/doacoes'         => include __DIR__ . '/../src/Views/doacoes/listagem.php',
-    $uri === '/reservar'        => include __DIR__ . '/../src/Views/doacoes/reservar.php',
+    // Doações — listagem e CRUD
+    $uri === '/doacoes'           => DoacaoController::listar(),
+    $uri === '/painel'            => DoacaoController::painel(),
+    $uri === '/doacoes/criar'     => DoacaoController::criar(),
+    $uri === '/doacoes/editar'    => DoacaoController::editar(),
+    $uri === '/doacoes/excluir'   => DoacaoController::excluir(),
 
-    // Admin (Fase 6)
-    $uri === '/admin'           => include __DIR__ . '/../src/Views/admin/painel.php',
+    // Solicitações / reservas
+    $uri === '/doacoes/reservar'         => SolicitacaoController::reservar(),
+    $uri === '/minhas-solicitacoes'      => SolicitacaoController::minhasSolicitacoes(),
+    $uri === '/solicitacoes/aprovar'     => SolicitacaoController::aprovar(),
+    $uri === '/solicitacoes/recusar'     => SolicitacaoController::recusar(),
+    $uri === '/solicitacoes/concluir'    => SolicitacaoController::concluir(),
 
-    // Perfil (Fase 6)
-    $uri === '/perfil'          => include __DIR__ . '/../src/Views/usuario/perfil.php',
+    // Admin
+    $uri === '/admin'             => AdminController::painel(),
+    $uri === '/admin/usuarios'    => AdminController::usuarios(),
+    $uri === '/admin/ativar'      => AdminController::ativarUsuario(),
+    $uri === '/admin/bloquear'    => AdminController::bloquearUsuario(),
+    $uri === '/admin/doacoes'     => AdminController::doacoes(),
+    $uri === '/admin/encerrar'    => AdminController::encerrarDoacao(),
+    $uri === '/admin/logs'        => AdminController::logs(),
+    $uri === '/admin/relatorio'   => AdminController::relatorio(),
 
     // API — chave pública RSA
     $uri === '/api/chave-publica' => servir_chave_publica(),

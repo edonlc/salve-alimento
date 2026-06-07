@@ -31,6 +31,27 @@ class AuthMiddleware
         }
     }
 
+    /**
+     * Retorna o payload do usuário logado via cookie (rotas web).
+     * Redireciona para /entrar se não autenticado.
+     */
+    public static function verificarSessao(): array
+    {
+        $token = $_COOKIE['access_token'] ?? null;
+
+        if ($token === null) {
+            header('Location: /entrar');
+            exit;
+        }
+
+        try {
+            return JwtService::validar($token);
+        } catch (\RuntimeException) {
+            header('Location: /entrar');
+            exit;
+        }
+    }
+
     private static function extrairToken(): ?string
     {
         $cabecalho = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
@@ -39,6 +60,7 @@ class AuthMiddleware
             return substr($cabecalho, 7);
         }
 
-        return null;
+        // Fallback para cookie (requisições web)
+        return $_COOKIE['access_token'] ?? null;
     }
 }
