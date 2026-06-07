@@ -31,6 +31,11 @@
     },
     "config": {
         "optimize-autoloader": true,
-        "sort-packages": true
+        "sort-packages": true,
+        "audit": {
+            "ignore": {
+                "PKSA-y2cr-5h3j-g3ys": "Vulnerabilidade conhecida em firebase/php-jwt 6.x — sem patch upstream disponível. Mitigação: validação de JWT é feita via JWKS do Cognito com verificação de assinatura RS256; tokens não são gerados localmente pela biblioteca."
+            }
+        }
     }
 }
