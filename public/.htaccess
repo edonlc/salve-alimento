@@ -1,0 +1,15 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Serve arquivos e diretórios reais diretamente
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Tudo mais passa pelo front controller
+RewriteRule ^ index.php [QSA,L]
+
+# Bloqueia acesso a arquivos sensíveis
+<FilesMatch "\.(env|pem|json|lock|md|sh)$">
+    Require all denied
+</FilesMatch>

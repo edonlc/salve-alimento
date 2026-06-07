@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salve Alimento — Sistema de Doação de Alimentos</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-deep:   #1a3a2a;
+      --green-mid:    #2d6a4f;
+      --green-vivid:  #40916c;
+      --green-light:  #74c69d;
+      --green-pale:   #b7e4c7;
+      --cream:        #faf7f0;
+      --warm-white:   #fff9f0;
+      --amber:        #e76f00;
+      --amber-light:  #ffd166;
+      --text-dark:    #1a1a1a;
+      --text-mid:     #3d3d3d;
+      --text-soft:    #6b6b6b;
+      --radius-sm:    6px;
+      --radius-md:    14px;
+      --radius-lg:    28px;
+      --shadow-soft:  0 4px 24px rgba(26,58,42,.10);
+      --shadow-card:  0 2px 12px rgba(26,58,42,.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ──────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: .4;
+    }
+
+    /* ── NAVBAR ─────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5%;
+      height: 64px;
+      background: rgba(250,247,240,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(45,106,79,.12);
+      transition: box-shadow .3s;
+    }
+    nav.scrolled { box-shadow: 0 2px 20px rgba(26,58,42,.10); }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo .logo-mark {
+      width: 36px; height: 36px;
+      background: var(--green-mid);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .nav-logo span {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      color: var(--green-deep);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-mid);
+      font-size: .88rem;
+      font-weight: 500;
+      letter-spacing: .02em;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--green-vivid); }
+
+    .nav-cta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--green-vivid);
+      color: var(--green-vivid);
+    }
+    .btn-outline:hover { background: var(--green-vivid); color: #fff; }
+
+    .btn-primary {
+      background: var(--green-mid);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--green-deep); transform: translateY(-1px); }
+
+    .btn-amber {
+      background: var(--amber);
+      color: #fff;
+    }
+    .btn-amber:hover { background: #c75e00; transform: translateY(-1px); }
+
+    .btn-lg { padding: 14px 32px; font-size: .95rem; border-radius: var(--radius-md); }
+
+    /* ── HERO ───────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 100px 5% 60px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 60% 70% at 80% 50%, rgba(116,198,157,.18) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 10% 80%, rgba(231,111,0,.08) 0%, transparent 50%),
+        var(--cream);
+    }
+
+    /* Floating blobs */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -100px; right: -120px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(64,145,108,.15) 0%, transparent 65%);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-30px) scale(1.05); }
+    }
+
+    .hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(45,106,79,.10);
+      border: 1px solid rgba(45,106,79,.20);
+      color: var(--green-mid);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      line-height: 1.12;
+      color: var(--green-deep);
+      margin-bottom: 20px;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--green-vivid);
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--text-soft);
+      max-width: 480px;
+      margin-bottom: 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(45,106,79,.12);
+    }
+    .stat-item { display: flex; flex-direction: column; }
+    .stat-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      color: var(--green-mid);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: .78rem;
+      color: var(--text-soft);
+      margin-top: 4px;
+    }
+
+    /* Hero visual panel */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .hero-card-stack {
+      position: relative;
+      width: 340px;
+    }
+
+    .donation-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(45,106,79,.08);
+    }
+
+    .donation-card.main {
+      position: relative;
+      z-index: 2;
+    }
+    .donation-card.back1 {
+      position: absolute;
+      top: -16px; left: 20px; right: 20px;
+      z-index: 1;
+      transform: rotate(-2deg);
+      opacity: .7;
+    }
+    .donation-card.back2 {
+      position: absolute;
+      top: -30px; left: 36px; right: 36px;
+      z-index: 0;
+      transform: rotate(1.5deg);
+      opacity: .4;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-type-badge {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+    .badge-available { background: #e8f5e9; color: #2d6a4f; }
+    .badge-reserved  { background: #fff3e0; color: #e76f00; }
+    .badge-expired   { background: #fce4ec; color: #c62828; }
+
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem;
+      color: var(--green-deep);
+      margin-bottom: 10px;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .8rem;
+      color: var(--text-soft);
+    }
+    .card-meta-row .icon { font-size: 1rem; }
+
+    .card-footer {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(45,106,79,.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .donor-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .donor-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--green-light), var(--green-mid));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem;
+      color: #fff;
+      font-weight: 700;
+    }
+    .donor-name { font-size: .78rem; color: var(--text-mid); font-weight: 500; }
+
+    .card-btn {
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--green-mid);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Floating notification */
+    .floating-notif {
+      position: absolute;
+      bottom: -20px; left: -40px;
+      background: #fff;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-shadow: 0 8px 32px rgba(26,58,42,.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideUp 1s ease .5s both;
+      z-index: 10;
+      border: 1px solid rgba(45,106,79,.08);
+      min-width: 200px;
+    }
+    .notif-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: #e8f5e9;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .notif-text { font-size: .78rem; }
+    .notif-text strong { display: block; color: var(--text-dark); }
+    .notif-text span { color: var(--text-soft); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTION COMMON ─────────────────────────────────── */
+    section { padding: 100px 5%; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+
+    .section-label {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--green-vivid);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      line-height: 1.15;
+      color: var(--green-deep);
+      margin-bottom: 18px;
+    }
+    .section-sub {
+      font-size: .98rem;
+      line-height: 1.7;
+      color: var(--text-soft);
+      max-width: 560px;
+    }
+
+    /* ── HOW IT WORKS ───────────────────────────────────── */
+    .how {
+      background: var(--warm-white);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      margin-top: 56px;
+    }
+
+    .step-card {
+      position: relative;
+      padding: 32px 24px;
+      background: #fff;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(45,106,79,.08);
+      box-shadow: var(--shadow-card);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .step-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .step-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 3rem;
+      color: rgba(45,106,79,.10);
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+    .step-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+    .step-title {
+      font-weight: 600;
+      font-size: .95rem;
+      color: var(--green-deep);
+      margin-bottom: 8px;
+    }
+    .step-desc {
+      font-size: .83rem;
+      line-height: 1.6;
+      color: var(--text-soft);
+    }
+
+    /* connector arrow */
+    .step-card:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      top: 50%; right: -22px;
+      transform: translateY(-50%);
+      color: var(--green-pale);
+      font-size: 1.4rem;
+    }
+
+    /* ── PROFILES ───────────────────────────────────────── */
+    .profiles { background: var(--cream); }
+
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 56px;
+    }
+
+    .profile-card {
+      border-radius: var(--radius-md);
+      padding: 28px 22px;
+      border: 1.5px solid transparent;
+      transition: all .25s;
+      cursor: default;
+    }
+    .profile-card:hover { transform: translateY(-4px); }
+
+    .profile-card.donor     { background: #e8f5e9; border-color: rgba(45,106,79,.20); }
+    .profile-card.ong       { background: #e3f2fd; border-color: rgba(33,150,243,.20); }
+    .profile-card.family    { background: #fff3e0; border-color: rgba(231,111,0,.20); }
+    .profile-card.admin     { background: #f3e5f5; border-color: rgba(156,39,176,.20); }
+
+    .profile-emoji { font-size: 2.4rem; margin-bottom: 14px; }
+    .profile-name  { font-weight: 700; font-size: .9rem; color: var(--green-deep); margin-bottom: 6px; }
+    .profile-desc  { font-size: .8rem; line-height: 1.55; color: var(--text-soft); margin-bottom: 14px; }
+    .profile-perms { display: flex; flex-direction: column; gap: 4px; }
+    .perm {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .75rem; color: var(--text-mid);
+    }
+    .perm::before { content: '✓'; color: var(--green-vivid); font-weight: 700; flex-shrink: 0; }
+
+    /* ── SECURITY ───────────────────────────────────────── */
+    .security {
+      background: var(--green-deep);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .security::before {
+      content: '';
+      position: absolute;
+      top: -200px; right: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(116,198,157,.12) 0%, transparent 60%);
+      border-radius: 50%;
+    }
+
+    .security .section-title { color: #fff; }
+    .security .section-label { color: var(--green-light); }
+    .security .section-sub   { color: rgba(255,255,255,.65); }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 56px;
+    }
+
+    .sec-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius-md);
+      padding: 28px 24px;
+      transition: background .25s;
+    }
+    .sec-card:hover { background: rgba(255,255,255,.09); }
+
+    .sec-icon {
+      width: 44px; height: 44px;
+      background: rgba(116,198,157,.18);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+    .sec-title {
+      font-weight: 600;
+      font-size: .9rem;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .sec-owasp {
+      font-size: .7rem;
+      color: var(--green-light);
+      letter-spacing: .05em;
+      margin-bottom: 8px;
+    }
+    .sec-desc {
+      font-size: .8rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,.55);
+    }
+
+    /* ── DONATIONS FEED ─────────────────────────────────── */
+    .feed { background: var(--warm-white); }
+
+    .feed-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .filter-chip {
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: .8rem;
+      font-weight: 500;
+      border: 1.5px solid rgba(45,106,79,.20);
+      background: transparent;
+      color: var(--text-mid);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .filter-chip.active, .filter-chip:hover {
+      background: var(--green-mid);
+      border-color: var(--green-mid);
+      color: #fff;
+    }
+
+    .donations-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .d-card {
+      background: #fff;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid rgba(45,106,79,.08);
+      box-shadow: var(--shadow-card);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .d-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); }
+
+    .d-card-img {
+      height: 120px;
+      background: linear-gradient(135deg, var(--green-pale), var(--green-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+      position: relative;
+    }
+    .d-card-img.amber-bg { background: linear-gradient(135deg, #ffd166, #ffb700); }
+    .d-card-img.red-bg   { background: linear-gradient(135deg, #ffcdd2, #ef9a9a); }
+
+    .d-card-body { padding: 18px 18px 14px; }
+    .d-title { font-weight: 700; font-size: .93rem; color: var(--green-deep); margin-bottom: 8px; }
+
+    .d-meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .d-meta-item { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--text-soft); }
+
+    .d-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid rgba(45,106,79,.06);
+    }
+
+    /* ── REGISTER CTA ───────────────────────────────────── */
+    .register-cta {
+      background: linear-gradient(135deg, var(--green-mid) 0%, var(--green-deep) 100%);
+      padding: 80px 5%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .register-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .register-cta .section-title { color: #fff; max-width: 600px; margin: 0 auto 16px; }
+    .register-cta p { color: rgba(255,255,255,.75); font-size: .98rem; margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+    .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-white { background: #fff; color: var(--green-mid); }
+    .btn-white:hover { background: var(--green-pale); }
+    .btn-ghost { background: rgba(255,255,255,.12); color: #fff; border: 1.5px solid rgba(255,255,255,.3); }
+    .btn-ghost:hover { background: rgba(255,255,255,.20); }
+
+    /* ── FOOTER ─────────────────────────────────────────── */
+    footer {
+      background: var(--green-deep);
+      color: rgba(255,255,255,.7);
+      padding: 60px 5% 30px;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+    .footer-brand .nav-logo span { color: var(--green-pale); }
+    .footer-brand p {
+      font-size: .82rem;
+      line-height: 1.7;
+      margin-top: 14px;
+      color: rgba(255,255,255,.5);
+    }
+    .footer-col h4 {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--green-light);
+      margin-bottom: 16px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-col a {
+      text-decoration: none;
+      font-size: .82rem;
+      color: rgba(255,255,255,.5);
+      transition: color .2s;
+    }
+    .footer-col a:hover { color: var(--green-light); }
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .78rem;
+      color: rgba(255,255,255,.3);
+    }
+    .ods-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(231,111,0,.20);
+      border: 1px solid rgba(231,111,0,.30);
+      color: var(--amber-light);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      letter-spacing: .05em;
+    }
+
+    /* ── MODAL ──────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,58,42,.6);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 440px;
+      padding: 40px;
+      transform: translateY(20px);
+      transition: transform .3s;
+      box-shadow: 0 32px 80px rgba(26,58,42,.25);
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.6rem;
+      color: var(--green-deep);
+      margin-bottom: 6px;
+    }
+    .modal p { font-size: .85rem; color: var(--text-soft); margin-bottom: 24px; }
+
+    .role-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+    .role-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(45,106,79,.20);
+      background: transparent;
+      font-size: .8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+      color: var(--text-mid);
+    }
+    .role-tab.active {
+      background: var(--green-mid);
+      border-color: var(--green-mid);
+      color: #fff;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(45,106,79,.20);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .88rem;
+      outline: none;
+      color: var(--text-dark);
+      background: #fff;
+      transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--green-vivid); }
+
+    .modal-footer { margin-top: 8px; text-align: center; font-size: .8rem; color: var(--text-soft); }
+    .modal-footer a { color: var(--green-vivid); text-decoration: none; font-weight: 600; cursor: pointer; }
+
+    .modal-close {
+      position: absolute;
+      top: 18px; right: 18px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(45,106,79,.08);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      color: var(--text-mid);
+    }
+    .modal { position: relative; }
+
+    /* ── ANIMATIONS ─────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .steps-grid, .profiles-grid { grid-template-columns: repeat(2, 1fr); }
+      .security-grid { grid-template-columns: repeat(2, 1fr); }
+      .step-card:not(:last-child)::after { display: none; }
+    }
+    @media (max-width: 768px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .nav-links { display: none; }
+      .donations-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .steps-grid, .profiles-grid, .security-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">�</div>
+    <span>Salve Alimento</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">Como Funciona</a></li>
+    <li><a href="#perfis">Perfis</a></li>
+    <li><a href="#seguranca">Segurança</a></li>
+    <li><a href="#doacoes">Doações</a></li>
+  </ul>
+  <div class="nav-cta">
+    <button class="btn btn-outline" onclick="openModal('login')">Entrar</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Cadastrar</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">� ODS 2 — Fome Zero</div>
+      <h1>Conecte <em>doadores</em><br>a quem mais precisa</h1>
+      <p>Plataforma web segura que combate o desperdício alimentar, conectando estabelecimentos comerciais a ONGs e famílias vulneráveis — antes que os alimentos sejam descartados.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" onclick="openModal('register')">Quero Doar �</button>
+        <button class="btn btn-outline btn-lg" onclick="openModal('register-receptor')">Sou Receptor</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num">46M</span>
+          <span class="stat-label">Toneladas desperdiçadas/ano no Brasil</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">33M</span>
+          <span class="stat-label">Pessoas em insegurança alimentar</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">4</span>
+          <span class="stat-label">Perfis de usuário integrados</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-card-stack">
+        <div class="donation-card back2"></div>
+        <div class="donation-card back1"></div>
+        <div class="donation-card main">
+          <div class="card-header">
+            <span class="card-type-badge badge-available">● Disponível</span>
+            <span style="font-size:.75rem;color:var(--text-soft)">há 2h</span>
+          </div>
+          <div class="card-title">� Pães artesanais + frutas</div>
+          <div class="card-meta">
+            <div class="card-meta-row"><span class="icon">�</span>Batel, Curitiba – PR</div>
+            <div class="card-meta-row"><span class="icon">�</span>Vence em: hoje às 20h</div>
+            <div class="card-meta-row"><span class="icon">�</span>~8 kg estimado</div>
+          </div>
+          <div class="card-footer">
+            <div class="donor-info">
+              <div class="donor-avatar">PA</div>
+              <span class="donor-name">Padaria Artesanal</span>
+            </div>
+            <button class="card-btn">Reservar</button>
+          </div>
+        </div>
+
+        <div class="floating-notif">
+          <div class="notif-icon">✅</div>
+          <div class="notif-text">
+            <strong>Reserva confirmada!</strong>
+            <span>ONG Boa Esperança aceitou</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-inner">
+    <div class="section-label">Passo a passo</div>
+    <h2 class="section-title">Como funciona o Salve Alimento</h2>
+    <p class="section-sub">Em apenas quatro etapas simples, o alimento que seria desperdiçado chega a quem precisa.</p>
+
+    <div class="steps-grid">
+      <div class="step-card fade-up">
+        <div class="step-num">01</div>
+        <div class="step-icon">�</div>
+        <div class="step-title">Cadastre-se</div>
+        <p class="step-desc">Crie sua conta como Doador, ONG, Família ou Administrador. Verificação por 2FA TOTP incluída.</p>
+      </div>
+      <div class="step-card fade-up" style="transition-delay:.1s">
+        <div class="step-num">02</div>
+        <div class="step-icon">�</div>
+        <div class="step-title">Publique a doação</div>
+        <p class="step-desc">Doadores registram itens com nome, quantidade, validade e localização. Status atualiza em tempo real.</p>
+      </div>
+      <div class="step-card fade-up" style="transition-delay:.2s">
+        <div class="step-num">03</div>
+        <div class="step-icon">�</div>
+        <div class="step-title">Receptores solicitam</div>
+        <p class="step-desc">ONGs e famílias filtram doações por região e solicitam retirada com um clique. Uma reserva ativa por doação.</p>
+      </div>
+      <div class="step-card fade-up" style="transition-delay:.3s">
+        <div class="step-num">04</div>
+        <div class="step-icon">�</div>
+        <div class="step-title">Doação concluída</div>
+        <p class="step-desc">Administrador valida, o status muda para "concluída" e o evento é registrado no log de auditoria.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERFIS -->
+<section class="profiles" id="perfis">
+  <div class="section-inner">
+    <div class="section-label">Quem usa</div>
+    <h2 class="section-title">Perfis de usuário</h2>
+    <p class="section-sub">Cada perfil tem permissões distintas, validadas no backend via JWT e RBAC centralizado.</p>
+
+    <div class="profiles-grid">
+      <div class="profile-card donor fade-up">
+        <div class="profile-emoji">�</div>
+        <div class="profile-name">Doador</div>
+        <div class="profile-desc">Mercados, restaurantes e padarias que publicam excedentes alimentares.</div>
+        <div class="profile-perms">
+          <div class="perm">Criar e editar doações próprias</div>
+          <div class="perm">Excluir doações disponíveis</div>
+          <div class="perm">Ver histórico de doações</div>
+          <div class="perm">Perfil e dashboard pessoal</div>
+        </div>
+      </div>
+      <div class="profile-card ong fade-up" style="transition-delay:.1s">
+        <div class="profile-emoji">�</div>
+        <div class="profile-name">Receptor – ONG</div>
+        <div class="profile-desc">Organizações que redistribuem alimentos a famílias em situação de vulnerabilidade.</div>
+        <div class="profile-perms">
+          <div class="perm">Visualizar doações disponíveis</div>
+          <div class="perm">Solicitar reserva em volume</div>
+          <div class="perm">Filtrar por região</div>
+          <div class="perm">Histórico de recebimentos</div>
+        </div>
+      </div>
+      <div class="profile-card family fade-up" style="transition-delay:.2s">
+        <div class="profile-emoji">�‍�‍�</div>
+        <div class="profile-name">Receptor – Família</div>
+        <div class="profile-desc">Famílias em situação de insegurança alimentar cadastradas no programa.</div>
+        <div class="profile-perms">
+          <div class="perm">Solicitar pequenas quantidades</div>
+          <div class="perm">Ver doações próximas</div>
+          <div class="perm">Acompanhar status do pedido</div>
+          <div class="perm">Dados protegidos por LGPD</div>
+        </div>
+      </div>
+      <div class="profile-card admin fade-up" style="transition-delay:.3s">
+        <div class="profile-emoji">�️</div>
+        <div class="profile-name">Administrador</div>
+        <div class="profile-desc">Equipe gestora responsável por toda a operação e conformidade do sistema.</div>
+        <div class="profile-perms">
+          <div class="perm">Validar e rejeitar cadastros</div>
+          <div class="perm">Moderar qualquer doação</div>
+          <div class="perm">Emitir relatórios completos</div>
+          <div class="perm">Acessar logs de auditoria</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEGURANÇA -->
+<section class="security" id="seguranca">
+  <div class="section-inner">
+    <div class="section-label">Segurança & Privacidade</div>
+    <h2 class="section-title">Construído com<br>segurança desde o início</h2>
+    <p class="section-sub">Arquitetura baseada nos controles OWASP Top 10 e nos princípios de Privacy by Design (LGPD).</p>
+
+    <div class="security-grid">
+      <div class="sec-card fade-up">
+        <div class="sec-icon">�</div>
+        <div class="sec-owasp">OWASP A07 · IAM</div>
+        <div class="sec-title">Autenticação 2FA (TOTP)</div>
+        <div class="sec-desc">Login com senha + código temporário via Google Authenticator. Tokens JWT validados em toda requisição ao backend.</div>
+      </div>
+      <div class="sec-card fade-up" style="transition-delay:.08s">
+        <div class="sec-icon">�</div>
+        <div class="sec-owasp">OWASP A01 · Rate Limiting</div>
+        <div class="sec-title">Proteção contra Força Bruta</div>
+        <div class="sec-desc">Bloqueio após N tentativas de login falhas. Rate limiting nos endpoints críticos para prevenir ataques automatizados.</div>
+      </div>
+      <div class="sec-card fade-up" style="transition-delay:.16s">
+        <div class="sec-icon">�</div>
+        <div class="sec-owasp">OWASP A03 · Injection</div>
+        <div class="sec-title">Sanitização de Entradas</div>
+        <div class="sec-desc">Validação e sanitização rigorosa de todos os inputs, incluindo upload de arquivos, com rejeição de tipos não permitidos.</div>
+      </div>
+      <div class="sec-card fade-up" style="transition-delay:.24s">
+        <div class="sec-icon">�</div>
+        <div class="sec-owasp">Criptografia Híbrida</div>
+        <div class="sec-title">Dados Sensíveis Cifrados</div>
+        <div class="sec-desc">Dados pessoais cifrados com AES (simétrico). A chave AES é protegida com RSA (assimétrico). Ilegível no banco sem a chave privada.</div>
+      </div>
+      <div class="sec-card fade-up" style="transition-delay:.32s">
+        <div class="sec-icon">�</div>
+        <div class="sec-owasp">OWASP A09 · Logging</div>
+        <div class="sec-title">Log de Auditoria Imutável</div>
+        <div class="sec-desc">Todos os eventos críticos (criar, editar, excluir, reservar) são registrados com timestamp, usuário e IP — sem possibilidade de alteração.</div>
+      </div>
+      <div class="sec-card fade-up" style="transition-delay:.40s">
+        <div class="sec-icon">�️</div>
+        <div class="sec-owasp">OWASP A05 · Headers HTTP</div>
+        <div class="sec-title">Proteção contra Clickjacking</div>
+        <div class="sec-desc">Headers de segurança HTTP configurados: X-Frame-Options, Content-Security-Policy, Strict-Transport-Security e X-Content-Type-Options.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEED DE DOAÇÕES -->
+<section class="feed" id="doacoes">
+  <div class="section-inner">
+    <div class="feed-header">
+      <div>
+        <div class="section-label">Disponíveis agora</div>
+        <h2 class="section-title" style="margin-bottom:0">Doações em tempo real</h2>
+      </div>
+      <button class="btn btn-outline">Ver todas →</button>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-chip active">Todas</button>
+      <button class="filter-chip">Padaria</button>
+      <button class="filter-chip">Frutas & Legumes</button>
+      <button class="filter-chip">Laticínios</button>
+      <button class="filter-chip">Refeições</button>
+      <button class="filter-chip">Batel</button>
+      <button class="filter-chip">Centro</button>
+      <button class="filter-chip">Água Verde</button>
+    </div>
+
+    <div class="donations-grid" style="margin-top:32px">
+      <!-- Card 1 -->
+      <div class="d-card fade-up">
+        <div class="d-card-img">�</div>
+        <div class="d-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span class="card-type-badge badge-available">● Disponível</span>
+            <span style="font-size:.72rem;color:var(--text-soft)">há 45min</span>
+          </div>
+          <div class="d-title">Pães e doces do dia</div>
+          <div class="d-meta">
+            <div class="d-meta-item">� Padaria Central — Batel</div>
+            <div class="d-meta-item">� Vence hoje às 22h</div>
+            <div class="d-meta-item">� ~15 kg · 40 unidades</div>
+          </div>
+          <div class="d-footer">
+            <div style="font-size:.75rem;color:var(--text-soft)">Doador verificado ✓</div>
+            <button class="btn btn-primary" style="font-size:.78rem;padding:7px 16px">Reservar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="d-card fade-up" style="transition-delay:.1s">
+        <div class="d-card-img amber-bg">�</div>
+        <div class="d-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span class="card-type-badge badge-available">● Disponível</span>
+            <span style="font-size:.72rem;color:var(--text-soft)">há 1h</span>
+          </div>
+          <div class="d-title">Hortifrúti selecionado</div>
+          <div class="d-meta">
+            <div class="d-meta-item">� Mercado São José — Centro</div>
+            <div class="d-meta-item">� Vence amanhã às 12h</div>
+            <div class="d-meta-item">� ~30 kg de vegetais</div>
+          </div>
+          <div class="d-footer">
+            <div style="font-size:.75rem;color:var(--text-soft)">Doador verificado ✓</div>
+            <button class="btn btn-primary" style="font-size:.78rem;padding:7px 16px">Reservar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 — Reservado -->
+      <div class="d-card fade-up" style="transition-delay:.2s">
+        <div class="d-card-img" style="background:linear-gradient(135deg,#e3f2fd,#90caf9)">�</div>
+        <div class="d-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span class="card-type-badge badge-reserved">◑ Reservado</span>
+            <span style="font-size:.72rem;color:var(--text-soft)">há 2h</span>
+          </div>
+          <div class="d-title">Pizzas e refeições prontas</div>
+          <div class="d-meta">
+            <div class="d-meta-item">� Restaurante Bella — Água Verde</div>
+            <div class="d-meta-item">� Vence hoje às 23h59</div>
+            <div class="d-meta-item">� ~20 porções</div>
+          </div>
+          <div class="d-footer">
+            <div style="font-size:.75rem;color:var(--text-soft)">Reservado por ONG ✓</div>
+            <button class="btn" style="font-size:.78rem;padding:7px 16px;background:#eee;color:#999;cursor:not-allowed">Indisponível</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA CADASTRO -->
+<section class="register-cta">
+  <div class="section-inner" style="position:relative;z-index:1">
+    <div class="ods-badge" style="display:inline-flex;margin-bottom:24px">� ODS 2 — Fome Zero · Agenda 2030</div>
+    <h2 class="section-title">Faça parte desta rede</h2>
+    <p>Seja um doador, receptor ou parceiro. Cada alimento salvo é uma família que não passa fome esta noite.</p>
+    <div class="cta-buttons">
+      <button class="btn btn-white btn-lg" onclick="openModal('register')">Cadastrar como Doador</button>
+      <button class="btn btn-ghost btn-lg" onclick="openModal('register-receptor')">Sou Receptor / ONG</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo">
+          <div class="logo-mark">�</div>
+          <span>Salve Alimento</span>
+        </a>
+        <p>Plataforma web segura que conecta doadores de alimentos a receptores cadastrados, combatendo o desperdício alimentar e a insegurança alimentar no Brasil.</p>
+        <p style="margin-top:12px">Desenvolvido na PUCPR · Disciplina: Segurança e Privacidade para Ambiente WEB</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="#how">Como Funciona</a></li>
+          <li><a href="#perfis">Perfis</a></li>
+          <li><a href="#seguranca">Segurança</a></li>
+          <li><a href="#doacoes">Doações</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Acesso</h4>
+        <ul>
+          <li><a href="#" onclick="openModal('login')">Entrar</a></li>
+          <li><a href="#" onclick="openModal('register')">Cadastrar</a></li>
+          <li><a href="#">Recuperar Senha</a></li>
+          <li><a href="#">Painel Admin</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Política de Privacidade</a></li>
+          <li><a href="#">Termos de Uso</a></li>
+          <li><a href="#">LGPD</a></li>
+          <li><a href="#">Contato</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Salve Alimento — Guilherme Lobo, Nicolas Tosin, Lucas Aiolf</span>
+      <span class="ods-badge">ODS 2 · Fome Zero</span>
+    </div>
+  </div>
+</footer>
+
+<!-- MODAL LOGIN / REGISTER -->
+<div class="modal-overlay" id="modal-login" onclick="handleOverlayClick(event,'modal-login')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-login')">✕</button>
+    <h2>Bem-vindo de volta</h2>
+    <p>Acesse sua conta no Salve Alimento</p>
+
+    <div class="role-tabs">
+      <button class="role-tab active">� Doador</button>
+      <button class="role-tab">� ONG</button>
+      <button class="role-tab">�‍�‍� Família</button>
+      <button class="role-tab">�️ Admin</button>
+    </div>
+
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" placeholder="seu@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" placeholder="••••••••" />
+    </div>
+    <div class="form-group">
+      <label>Código 2FA (TOTP)</label>
+      <input type="text" placeholder="000000" maxlength="6" style="letter-spacing:.3em;font-size:1.1rem" />
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:13px;font-size:.9rem;justify-content:center">Entrar com segurança �</button>
+    <div class="modal-footer" style="margin-top:16px">
+      Não tem conta? <a onclick="switchModal('modal-login','modal-register')">Cadastre-se</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-register" onclick="handleOverlayClick(event,'modal-register')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-register')">✕</button>
+    <h2>Criar conta</h2>
+    <p>Escolha seu perfil e comece a fazer a diferença</p>
+
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="setActiveTab(this)">� Doador</button>
+      <button class="role-tab" onclick="setActiveTab(this)">� ONG</button>
+      <button class="role-tab" onclick="setActiveTab(this)">�‍�‍� Família</button>
+    </div>
+
+    <div class="form-group">
+      <label>Nome completo / Razão social</label>
+      <input type="text" placeholder="Ex: Padaria Central Ltda." />
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" placeholder="contato@empresa.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" placeholder="Mínimo 8 caracteres" />
+    </div>
+    <div class="form-group">
+      <label>Cidade / Região</label>
+      <input type="text" placeholder="Ex: Curitiba – PR" />
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:13px;font-size:.9rem;justify-content:center">Criar conta e configurar 2FA →</button>
+    <div class="modal-footer" style="margin-top:16px">
+      Já tem conta? <a onclick="switchModal('modal-register','modal-login')">Entrar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // Intersection Observer for fade-up
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Filter chips
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  // Role tabs
+  function setActiveTab(btn) {
+    btn.closest('.role-tabs').querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  document.querySelectorAll('.role-tab').forEach(tab => {
+    tab.addEventListener('click', () => setActiveTab(tab));
+  });
+
+  // Modal helpers
+  function openModal(id) {
+    const realId = (id === 'register-receptor') ? 'modal-register' : `modal-${id}`;
+    document.getElementById(realId).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function switchModal(from, to) {
+    closeModal(from);
+    setTimeout(() => openModal(to.replace('modal-','')), 200);
+  }
+  function handleOverlayClick(e, id) {
+    if (e.target === document.getElementById(id)) closeModal(id);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open')
+      .forEach(m => closeModal(m.id));
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# Dependências
+/vendor/
+
+# Variáveis de ambiente (NUNCA commitar)
+.env
+.env.local
+.env.*.local
+
+# Chaves criptográficas (NUNCA commitar a privada)
+keys/private.pem
+keys/*.pem
+
+# Logs
+*.log
+/logs/
+
+# Cache e temporários
+.cache/
+.phpunit.cache/
+/tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Build
+/build/
+/dist/

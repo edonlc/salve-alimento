@@ -1,0 +1,52 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-scan:
+    name: Auditoria de Segurança
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+          extensions: pdo, pdo_mysql, openssl
+
+      - name: Instalar dependências
+        run: composer install --no-progress --prefer-dist
+
+      - name: Auditar CVEs nas dependências
+        run: composer audit
+
+      - name: Verificar padrões de segurança (PHPCS)
+        run: vendor/bin/phpcs --standard=Security src/ || true
+
+  unit-tests:
+    name: Testes Unitários
+    runs-on: ubuntu-latest
+    needs: security-scan
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer, phpunit
+          extensions: pdo, pdo_mysql, openssl
+
+      - name: Instalar dependências
+        run: composer install --no-progress --prefer-dist
+
+      - name: Executar testes unitários
+        run: vendor/bin/phpunit --testdox tests/
