@@ -23,32 +23,35 @@ if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $metodo = $_SERVER['REQUEST_METHOD'];
 
+use SalveAlimento\Controllers\AuthController;
+
 match (true) {
-    // Página inicial — landing page estática
     $uri === '/' || $uri === '/index.php'
         => include __DIR__ . '/landing.html',
 
-    // Rotas de autenticação (implementadas na Fase 5)
-    $uri === '/entrar'              => include __DIR__ . '/../src/Views/auth/login.php',
-    $uri === '/cadastrar'           => include __DIR__ . '/../src/Views/auth/cadastro.php',
-    $uri === '/recuperar-senha'     => include __DIR__ . '/../src/Views/auth/recuperar-senha.php',
-    $uri === '/sair'                => include __DIR__ . '/../src/Views/auth/logout.php',
+    // Autenticação
+    $uri === '/entrar'          => AuthController::login(),
+    $uri === '/cadastrar'       => AuthController::registrar(),
+    $uri === '/verificar-2fa'   => AuthController::verificar2fa(),
+    $uri === '/configurar-2fa'  => AuthController::configurar2fa(),
+    $uri === '/sair'            => AuthController::logout(),
+    $uri === '/recuperar-senha' => AuthController::recuperarSenha(),
+    $uri === '/redefinir-senha' => AuthController::redefinirSenha(),
 
-    // Rotas do doador (implementadas na Fase 6)
-    $uri === '/painel'              => include __DIR__ . '/../src/Views/doador/painel.php',
-    $uri === '/doacoes'             => include __DIR__ . '/../src/Views/doacoes/listagem.php',
-    $uri === '/reservar'            => include __DIR__ . '/../src/Views/doacoes/reservar.php',
+    // Painel doador (Fase 6)
+    $uri === '/painel'          => include __DIR__ . '/../src/Views/doador/painel.php',
+    $uri === '/doacoes'         => include __DIR__ . '/../src/Views/doacoes/listagem.php',
+    $uri === '/reservar'        => include __DIR__ . '/../src/Views/doacoes/reservar.php',
 
-    // Painel admin (implementado na Fase 6)
-    $uri === '/admin'               => include __DIR__ . '/../src/Views/admin/painel.php',
+    // Admin (Fase 6)
+    $uri === '/admin'           => include __DIR__ . '/../src/Views/admin/painel.php',
 
-    // Perfil do usuário
-    $uri === '/perfil'              => include __DIR__ . '/../src/Views/usuario/perfil.php',
+    // Perfil (Fase 6)
+    $uri === '/perfil'          => include __DIR__ . '/../src/Views/usuario/perfil.php',
 
-    // API — chave pública RSA (Fase 8)
-    $uri === '/api/chave-publica'   => servir_chave_publica(),
+    // API — chave pública RSA
+    $uri === '/api/chave-publica' => servir_chave_publica(),
 
-    // 404
     default => pagina_nao_encontrada(),
 };
 
