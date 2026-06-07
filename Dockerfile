@@ -17,8 +17,6 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader 2>/dev/null || true
-
 # Aponta DocumentRoot para public/
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' \
     /etc/apache2/sites-available/000-default.conf
@@ -30,8 +28,13 @@ RUN printf '<Directory /var/www/html/public>\n\
 </Directory>\n' >> /etc/apache2/conf-available/salve.conf \
     && a2enconf salve
 
-# PHP seguro para produção
+# PHP seguro
 RUN echo "display_errors = Off\nlog_errors = On\nerror_log = /var/log/php_errors.log\nexpose_php = Off" \
     > /usr/local/etc/php/conf.d/seguranca.ini
 
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
