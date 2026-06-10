@@ -98,9 +98,14 @@ class AuthController
             }
 
             if ($desafio === 'MFA_SETUP') {
-                $_SESSION['mfa_setup_email']        = $email;
-                $_SESSION['mfa_setup_session']      = $resultado['Session'];
-                $_SESSION['mfa_setup_access_token'] = $resultado['ChallengeParameters']['USER_ID_FOR_SRP'] ?? '';
+                // Chama AssociateSoftwareToken imediatamente — a session expira em ~3 min
+                // e pode expirar antes do usuário abrir /configurar-2fa
+                $totp    = CognitoService::associarTotp($resultado['Session']);
+                $segredo = strtoupper(preg_replace('/[^A-Za-z2-7]/', '', $totp['SecretCode']));
+
+                $_SESSION['mfa_setup_email']          = $email;
+                $_SESSION['mfa_setup_segredo']        = $segredo;
+                $_SESSION['mfa_verify_session']       = $totp['Session'];
 
                 self::redirecionar('/configurar-2fa');
                 return;
@@ -160,49 +165,41 @@ class AuthController
         self::iniciarSessao();
 
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $accessToken = $_SESSION['mfa_setup_access_token'] ?? '';
-            $email       = $_SESSION['mfa_setup_email']        ?? '';
+            $email   = $_SESSION['mfa_setup_email']   ?? '';
+            $segredo = $_SESSION['mfa_setup_segredo'] ?? '';
 
-            if (!$accessToken || !$email) {
+            // AssociateSoftwareToken já foi chamado no login; se faltar, redireciona
+            if (!$email || !$segredo) {
                 self::redirecionar('/entrar');
                 return;
             }
 
-            try {
-                $segredo = CognitoService::associarTotp($accessToken);
-                $_SESSION['mfa_setup_segredo'] = $segredo;
+            $uriTotp = 'otpauth://totp/SalveAlimento:' . rawurlencode($email)
+                . '?secret=' . $segredo . '&issuer=SalveAlimento';
 
-                $uriTotp = 'otpauth://totp/SalveAlimento:' . urlencode($email)
-                    . '?secret=' . $segredo . '&issuer=SalveAlimento';
-
-                include __DIR__ . '/../Views/auth/configurar-2fa.php';
-            } catch (\RuntimeException $e) {
-                self::responderErro('Erro ao gerar QR code. Tente fazer login novamente.', '/entrar');
-            }
+            include __DIR__ . '/../Views/auth/configurar-2fa.php';
             return;
         }
 
         // POST — confirma o código TOTP digitado pelo usuário
-        $codigo      = trim($_POST['codigo']       ?? '');
-        $accessToken = $_SESSION['mfa_setup_access_token'] ?? '';
-        $session     = $_SESSION['mfa_setup_session']      ?? '';
-        $email       = $_SESSION['mfa_setup_email']        ?? '';
+        $codigo  = trim($_POST['codigo'] ?? '');
+        $session = $_SESSION['mfa_verify_session'] ?? '';
+        $email   = $_SESSION['mfa_setup_email']    ?? '';
 
-        if (!preg_match('/^\d{6}$/', $codigo) || !$accessToken) {
-            self::responderErro('Código inválido.', '/configurar-2fa');
+        if (!preg_match('/^\d{6}$/', $codigo) || !$session || !$email) {
+            self::responderErro('Código inválido ou sessão expirada. Faça login novamente.', '/entrar');
             return;
         }
 
         try {
-            CognitoService::verificarTotp($accessToken, $codigo);
-            $resultado = CognitoService::responderDesafioMfaSetup($email, $session);
+            $sessionPos = CognitoService::verificarTotp($session, $codigo);
+            $resultado  = CognitoService::responderDesafioMfaSetup($email, $sessionPos);
 
             if (!empty($resultado['AuthenticationResult'])) {
                 unset(
                     $_SESSION['mfa_setup_email'],
-                    $_SESSION['mfa_setup_session'],
-                    $_SESSION['mfa_setup_access_token'],
-                    $_SESSION['mfa_setup_segredo']
+                    $_SESSION['mfa_setup_segredo'],
+                    $_SESSION['mfa_verify_session']
                 );
                 self::salvarTokens($resultado['AuthenticationResult'], $email);
                 AuditService::registrar('LOGIN_PRIMEIRO_ACESSO', 'usuarios', null, null, self::idUsuarioLogado());
@@ -308,13 +305,26 @@ class AuthController
     {
         $seguro = !empty($_SERVER['HTTPS']);
 
+        $expira = time() + ($tokens['ExpiresIn'] ?? 3600);
+
         setcookie('access_token', $tokens['AccessToken'], [
-            'expires'  => time() + ($tokens['ExpiresIn'] ?? 3600),
+            'expires'  => $expira,
             'path'     => '/',
             'secure'   => $seguro,
             'httponly' => true,
             'samesite' => 'Strict',
         ]);
+
+        // IdToken contém claims customizados (custom:perfil) — necessário para RBAC
+        if (!empty($tokens['IdToken'])) {
+            setcookie('id_token', $tokens['IdToken'], [
+                'expires'  => $expira,
+                'path'     => '/',
+                'secure'   => $seguro,
+                'httponly' => true,
+                'samesite' => 'Strict',
+            ]);
+        }
 
         if (!empty($tokens['RefreshToken'])) {
             setcookie('refresh_token', $tokens['RefreshToken'], [
@@ -341,7 +351,7 @@ class AuthController
 
     private static function limparCookies(): void
     {
-        foreach (['access_token', 'refresh_token'] as $cookie) {
+        foreach (['access_token', 'id_token', 'refresh_token'] as $cookie) {
             setcookie($cookie, '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true]);
         }
     }

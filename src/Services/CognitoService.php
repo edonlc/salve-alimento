@@ -22,8 +22,11 @@ class CognitoService
     {
         try {
             $resposta = self::cliente()->post('', [
-                'headers' => ['X-Amz-Target' => 'AWSCognitoIdentityProviderService.' . $alvo],
-                'json'    => $corpo,
+                'headers' => [
+                    'X-Amz-Target'  => 'AWSCognitoIdentityProviderService.' . $alvo,
+                    'Content-Type'  => 'application/x-amz-json-1.1',
+                ],
+                'body' => json_encode($corpo),
             ]);
             return json_decode($resposta->getBody()->getContents(), true) ?? [];
         } catch (ClientException $e) {
@@ -91,27 +94,32 @@ class CognitoService
     }
 
     /**
-     * Primeiro acesso — associa um autenticador TOTP à conta
-     * Retorna o SecretCode para gerar o QR code
+     * Primeiro acesso — associa um autenticador TOTP via Session do desafio MFA_SETUP.
+     * Retorna ['SecretCode' => ..., 'Session' => ...] para continuar o fluxo.
      */
-    public static function associarTotp(string $accessToken): string
+    public static function associarTotp(string $session): array
     {
         $resposta = self::chamar('AssociateSoftwareToken', [
-            'AccessToken' => $accessToken,
+            'Session' => $session,
         ]);
-        return $resposta['SecretCode'];
+        return [
+            'SecretCode' => $resposta['SecretCode'],
+            'Session'    => $resposta['Session'] ?? $session,
+        ];
     }
 
     /**
-     * Confirma o código TOTP digitado pelo usuário após escanear o QR code
+     * Confirma o código TOTP digitado pelo usuário via Session do AssociateSoftwareToken.
+     * Retorna a nova Session para usar no RespondToAuthChallenge.
      */
-    public static function verificarTotp(string $accessToken, string $codigo): void
+    public static function verificarTotp(string $session, string $codigo): string
     {
-        self::chamar('VerifySoftwareToken', [
-            'AccessToken'        => $accessToken,
+        $resposta = self::chamar('VerifySoftwareToken', [
+            'Session'            => $session,
             'UserCode'           => $codigo,
             'FriendlyDeviceName' => 'Salve Alimento',
         ]);
+        return $resposta['Session'] ?? $session;
     }
 
     /**
