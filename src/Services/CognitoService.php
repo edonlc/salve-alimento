@@ -60,6 +60,16 @@ class CognitoService
         ]);
     }
 
+    public static function confirmarEmail(string $email, string $codigo): void
+    {
+        self::chamar('ConfirmSignUp', [
+            'ClientId'         => $_ENV['COGNITO_CLIENT_ID'],
+            'SecretHash'       => self::calcularSecretHash($email),
+            'Username'         => $email,
+            'ConfirmationCode' => $codigo,
+        ]);
+    }
+
     /**
      * Passo 1 do login — retorna desafio MFA ou tokens (se MFA já configurado)
      */

@@ -6,6 +6,7 @@ namespace SalveAlimento\Controllers;
 
 use SalveAlimento\Models\Usuario;
 use SalveAlimento\Services\CognitoService;
+use SalveAlimento\Services\CryptoService;
 use SalveAlimento\Services\AuditService;
 use SalveAlimento\Middleware\RateLimitMiddleware;
 
@@ -46,7 +47,7 @@ class AuthController
             $resultado = CognitoService::registrar($email, $senha, $nome, $perfil);
 
             $sub = $resultado['UserSub'] ?? '';
-            Usuario::criar([
+            $idUsuario = Usuario::criar([
                 'cognito_sub' => $sub,
                 'nome'        => $nome,
                 'email'       => $email,
@@ -54,11 +55,57 @@ class AuthController
                 'status'      => 'pendente',
             ]);
 
+            // Salva dados pessoais cifrados enviados pelo browser via WebCrypto
+            $cpfEnc      = $_POST['cpf_enc']      ?? '';
+            $enderecoEnc = $_POST['endereco_enc'] ?? '';
+            $chaveEnc    = $_POST['chave_enc']    ?? '';
+
+            if ($idUsuario && $cpfEnc && $chaveEnc) {
+                try {
+                    $chaveAes = CryptoService::decifrarChaveAes($chaveEnc);
+                    CryptoService::decifrarAes($cpfEnc, $chaveAes);
+                    Usuario::salvarDadosCifrados(
+                        $idUsuario,
+                        base64_decode($cpfEnc),
+                        $enderecoEnc ? base64_decode($enderecoEnc) : '',
+                        base64_decode($chaveEnc)
+                    );
+                } catch (\RuntimeException) {
+                    // Blobs inválidos — ignora; usuário poderá preencher depois em /perfil
+                }
+            }
+
             AuditService::registrar('REGISTRO', 'usuarios', null, null, null);
 
-            self::redirecionar('/entrar?cadastro=ok');
+            self::redirecionar('/confirmar-email?email=' . rawurlencode($email));
         } catch (\RuntimeException $e) {
             self::responderErro($e->getMessage(), '/cadastrar');
+        }
+    }
+
+    // ── CONFIRMAÇÃO DE E-MAIL (ConfirmSignUp) ─────────────────────────────────
+
+    public static function confirmarEmail(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            include __DIR__ . '/../Views/auth/confirmar-email.php';
+            return;
+        }
+
+        $email  = trim($_POST['email']  ?? '');
+        $codigo = trim($_POST['codigo'] ?? '');
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^\d{6}$/', $codigo)) {
+            self::responderErro('E-mail ou código inválido.', '/confirmar-email?email=' . rawurlencode($email));
+            return;
+        }
+
+        try {
+            CognitoService::confirmarEmail($email, $codigo);
+            Usuario::ativarPorEmail($email);
+            self::redirecionar('/entrar?cadastro=ok');
+        } catch (\RuntimeException $e) {
+            self::responderErro('Código inválido ou expirado.', '/confirmar-email?email=' . rawurlencode($email));
         }
     }
 
@@ -67,6 +114,15 @@ class AuthController
     public static function login(): void
     {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $token = $_COOKIE['id_token'] ?? $_COOKIE['access_token'] ?? null;
+            if ($token !== null) {
+                try {
+                    \SalveAlimento\Services\JwtService::validar($token);
+                    self::redirecionar('/painel');
+                } catch (\RuntimeException) {
+                    // token inválido ou expirado — exibe o login normalmente
+                }
+            }
             include __DIR__ . '/../Views/auth/login.php';
             return;
         }

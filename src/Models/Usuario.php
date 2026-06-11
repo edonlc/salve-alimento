@@ -60,6 +60,13 @@ class Usuario
         )->execute([$status, $id]);
     }
 
+    public static function ativarPorEmail(string $email): void
+    {
+        Database::conexao()->prepare(
+            "UPDATE usuarios SET status = 'ativo' WHERE email = ? AND status = 'pendente'"
+        )->execute([$email]);
+    }
+
     /**
      * Salva dados cifrados (CPF e endereço) e a chave AES protegida por RSA.
      */

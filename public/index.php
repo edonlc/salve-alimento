@@ -8,6 +8,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
+// Confia no proxy reverso nginx para HTTPS
+if (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+}
+
 // ── Headers de segurança em toda resposta ──────────────────────────────────
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
@@ -27,15 +32,17 @@ use SalveAlimento\Controllers\AuthController;
 use SalveAlimento\Controllers\DoacaoController;
 use SalveAlimento\Controllers\SolicitacaoController;
 use SalveAlimento\Controllers\AdminController;
+use SalveAlimento\Controllers\PerfilController;
 
 match (true) {
     $uri === '/' || $uri === '/index.php'
         => include __DIR__ . '/landing.html',
 
     // Autenticação
-    $uri === '/entrar'          => AuthController::login(),
-    $uri === '/cadastrar'       => AuthController::registrar(),
-    $uri === '/verificar-2fa'   => AuthController::verificar2fa(),
+    $uri === '/entrar'           => AuthController::login(),
+    $uri === '/cadastrar'        => AuthController::registrar(),
+    $uri === '/confirmar-email'  => AuthController::confirmarEmail(),
+    $uri === '/verificar-2fa'    => AuthController::verificar2fa(),
     $uri === '/configurar-2fa'  => AuthController::configurar2fa(),
     $uri === '/sair'            => AuthController::logout(),
     $uri === '/recuperar-senha' => AuthController::recuperarSenha(),
@@ -64,6 +71,10 @@ match (true) {
     $uri === '/admin/encerrar'    => AdminController::encerrarDoacao(),
     $uri === '/admin/logs'        => AdminController::logs(),
     $uri === '/admin/relatorio'   => AdminController::relatorio(),
+
+    // Perfil — dados pessoais com criptografia híbrida
+    $uri === '/perfil'         => PerfilController::exibir(),
+    $uri === '/perfil/salvar'  => PerfilController::salvar(),
 
     // API — chave pública RSA
     $uri === '/api/chave-publica' => servir_chave_publica(),
