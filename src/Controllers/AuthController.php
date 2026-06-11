@@ -286,7 +286,7 @@ class AuthController
         AuditService::registrar('LOGOUT', 'usuarios', null, null, $idUsuario);
 
         session_destroy();
-        self::limparCookies();
+        \SalveAlimento\Middleware\AuthMiddleware::limparCookiesAuth();
         self::redirecionar('/entrar');
     }
 
@@ -395,20 +395,14 @@ class AuthController
         // Armazena e-mail na sessão para renovação de token
         self::iniciarSessao();
         session_regenerate_id(true);
-        $_SESSION['usuario_email'] = $email;
+        $_SESSION['usuario_email']    = $email;
+        $_SESSION['ultima_atividade'] = time();
 
         // Sincroniza usuário local com o Cognito sub
         $usuario = Usuario::buscarPorEmail($email);
         if ($usuario) {
             $_SESSION['usuario_id']     = $usuario['id'];
             $_SESSION['usuario_perfil'] = $usuario['perfil'];
-        }
-    }
-
-    private static function limparCookies(): void
-    {
-        foreach (['access_token', 'id_token', 'refresh_token'] as $cookie) {
-            setcookie($cookie, '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true]);
         }
     }
 

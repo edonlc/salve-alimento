@@ -4,8 +4,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $erro    = $_SESSION['erro'] ?? null;
 $sucesso = null;
-if (isset($_GET['cadastro'])) $sucesso = 'Cadastro realizado! Faça login para continuar.';
-if (isset($_GET['senha']))    $sucesso = 'Senha redefinida com sucesso! Faça login.';
+if (isset($_GET['cadastro']))        $sucesso = 'Cadastro realizado! Faça login para continuar.';
+if (isset($_GET['senha']))           $sucesso = 'Senha redefinida com sucesso! Faça login.';
+if (isset($_GET['sessao']))          $erro    = 'Sua sessão expirou por inatividade. Faça login novamente.';
 unset($_SESSION['erro']);
 ?>
 <!DOCTYPE html>
