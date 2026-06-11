@@ -21,8 +21,8 @@
     <li><a href="#doacoes">Doações</a></li>
   </ul>
   <div class="nav-cta">
-    <button class="btn btn-outline" onclick="abrirModal('login')">Entrar</button>
-    <button class="btn btn-primary" onclick="abrirModal('register')">Cadastrar</button>
+    <a href="/entrar" class="btn btn-outline">Entrar</a>
+    <a href="/cadastrar" class="btn btn-primary">Cadastrar</a>
   </div>
 </nav>
 
@@ -34,8 +34,8 @@
       <h1>Conecte <em>doadores</em><br>a quem mais precisa</h1>
       <p>Plataforma segura que combate o desperdício alimentar, conectando estabelecimentos comerciais a ONGs e famílias vulneráveis — antes que os alimentos sejam descartados.</p>
       <div class="hero-actions">
-        <button class="btn btn-primary btn-lg" onclick="abrirModal('register')">Quero Doar 🤝</button>
-        <button class="btn btn-outline btn-lg" onclick="abrirModal('register-receptor')">Sou Receptor</button>
+        <a href="/cadastrar" class="btn btn-primary btn-lg">Quero Doar 🤝</a>
+        <a href="/cadastrar" class="btn btn-outline btn-lg">Sou Receptor</a>
       </div>
       <div class="hero-stats">
         <div class="stat-item">
@@ -189,7 +189,7 @@
         <div class="section-label">Disponíveis agora</div>
         <h2 class="section-title" style="margin-bottom:0">Doações em tempo real</h2>
       </div>
-      <button class="btn btn-outline" onclick="abrirModal('login')">Ver todas →</button>
+      <a href="/entrar" class="btn btn-outline">Ver todas →</a>
     </div>
     <div class="filter-bar">
       <button class="filter-chip active">Todas</button>
@@ -215,7 +215,7 @@
           </div>
           <div class="d-footer">
             <span class="verified">Doador verificado ✓</span>
-            <button class="btn btn-primary" style="font-size:.78rem;padding:7px 16px" onclick="abrirModal('login')">Reservar</button>
+            <a href="/entrar" class="btn btn-primary" style="font-size:.78rem;padding:7px 16px">Reservar</a>
           </div>
         </div>
       </div>
@@ -235,7 +235,7 @@
           </div>
           <div class="d-footer">
             <span class="verified">Doador verificado ✓</span>
-            <button class="btn btn-primary" style="font-size:.78rem;padding:7px 16px" onclick="abrirModal('login')">Reservar</button>
+            <a href="/entrar" class="btn btn-primary" style="font-size:.78rem;padding:7px 16px">Reservar</a>
           </div>
         </div>
       </div>
@@ -270,8 +270,8 @@
     <h2 class="section-title">Faça parte desta rede</h2>
     <p>Seja um doador, receptor ou parceiro. Cada alimento salvo é uma família que não passa fome esta noite.</p>
     <div class="cta-buttons">
-      <button class="btn btn-white btn-lg" onclick="abrirModal('register')">Cadastrar como Doador</button>
-      <button class="btn btn-ghost btn-lg" onclick="abrirModal('register-receptor')">Sou Receptor / ONG</button>
+      <a href="/cadastrar" class="btn btn-white btn-lg">Cadastrar como Doador</a>
+      <a href="/cadastrar" class="btn btn-ghost btn-lg">Sou Receptor / ONG</a>
     </div>
   </div>
 </section>
@@ -292,15 +292,14 @@
         <ul>
           <li><a href="#como-funciona">Como Funciona</a></li>
           <li><a href="#perfis">Perfis</a></li>
-          <li><a href="#seguranca">Segurança</a></li>
           <li><a href="#doacoes">Doações</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Acesso</h4>
         <ul>
-          <li><a href="#" onclick="abrirModal('login')">Entrar na plataforma</a></li>
-          <li><a href="#" onclick="abrirModal('register')">Criar conta</a></li>
+          <li><a href="/entrar">Entrar na plataforma</a></li>
+          <li><a href="/cadastrar">Criar conta</a></li>
           <li><a href="/recuperar-senha">Recuperar senha</a></li>
         </ul>
       </div>
@@ -320,71 +319,6 @@
     </div>
   </div>
 </footer>
-
-<!-- MODAL: LOGIN -->
-<div class="modal-overlay" id="modal-login" onclick="fecharAoClicarFora(event,'modal-login')">
-  <div class="modal">
-    <button class="modal-close" onclick="fecharModal('modal-login')">✕</button>
-    <h2>Bem-vindo de volta</h2>
-    <p>Acesse sua conta no Salve Alimento</p>
-
-    <div class="form-group">
-      <label>E-mail</label>
-      <input type="email" placeholder="seu@email.com" />
-    </div>
-    <div class="form-group">
-      <label>Senha</label>
-      <input type="password" placeholder="••••••••" />
-    </div>
-    <div class="form-group">
-      <label>Código de verificação (2FA)</label>
-      <input type="text" placeholder="000 000" maxlength="6" style="letter-spacing:.3em;font-size:1.1rem" />
-      <div class="form-hint">Código de 6 dígitos do seu aplicativo autenticador</div>
-    </div>
-    <button class="btn btn-primary" style="width:100%;padding:13px;font-size:.9rem;justify-content:center">Entrar com segurança 🔐</button>
-    <div class="modal-footer" style="margin-top:16px">
-      Esqueceu sua senha? <a href="/recuperar-senha">Recuperar</a>
-      &nbsp;·&nbsp; Não tem conta? <a onclick="trocarModal('modal-login','modal-register')">Cadastre-se</a>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: CADASTRO -->
-<div class="modal-overlay" id="modal-register" onclick="fecharAoClicarFora(event,'modal-register')">
-  <div class="modal">
-    <button class="modal-close" onclick="fecharModal('modal-register')">✕</button>
-    <h2>Criar conta</h2>
-    <p>Escolha seu perfil e comece a fazer a diferença</p>
-
-    <div class="role-tabs">
-      <button class="role-tab active">🏪 Doador</button>
-      <button class="role-tab">🤝 ONG</button>
-      <button class="role-tab">👨‍👩‍👧 Família</button>
-    </div>
-
-    <div class="form-group">
-      <label>Nome completo / Razão social</label>
-      <input type="text" placeholder="Ex: Padaria Central Ltda." />
-    </div>
-    <div class="form-group">
-      <label>E-mail</label>
-      <input type="email" placeholder="contato@empresa.com" />
-    </div>
-    <div class="form-group">
-      <label>Senha</label>
-      <input type="password" placeholder="Mínimo 8 caracteres" />
-      <div class="form-hint">Use letras, números e símbolos para uma senha forte</div>
-    </div>
-    <div class="form-group">
-      <label>Cidade</label>
-      <input type="text" placeholder="Ex: Curitiba – PR" />
-    </div>
-    <button class="btn btn-primary" style="width:100%;padding:13px;font-size:.9rem;justify-content:center">Criar conta →</button>
-    <div class="modal-footer" style="margin-top:16px">
-      Já tem conta? <a onclick="trocarModal('modal-register','modal-login')">Entrar</a>
-    </div>
-  </div>
-</div>
 
 <script src="/assets/js/landing.js"></script>
 </body>

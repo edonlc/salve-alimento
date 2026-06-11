@@ -37,7 +37,9 @@ class AuthMiddleware
      */
     public static function verificarSessao(): array
     {
-        $token = $_COOKIE['access_token'] ?? null;
+        // IdToken contém custom:perfil — necessário para RBAC
+        // AccessToken é usado apenas para chamadas à API do Cognito
+        $token = $_COOKIE['id_token'] ?? $_COOKIE['access_token'] ?? null;
 
         if ($token === null) {
             header('Location: /entrar');
