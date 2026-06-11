@@ -14,6 +14,16 @@ class Database
     private function __construct() {}
     private function __clone() {}
 
+    public static function definirConexao(PDO $pdo): void
+    {
+        self::$instancia = $pdo;
+    }
+
+    public static function resetar(): void
+    {
+        self::$instancia = null;
+    }
+
     public static function conexao(): PDO
     {
         if (self::$instancia !== null) {

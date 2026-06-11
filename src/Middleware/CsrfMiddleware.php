@@ -50,7 +50,7 @@ class CsrfMiddleware
             ?? $_SERVER['HTTP_X_CSRF_TOKEN']
             ?? '';
 
-        if ($tokenSessao === '' || !hash_equals($tokenSessao, $tokenEnviado)) {
+        if (!self::tokenValido($tokenSessao, $tokenEnviado)) {
             http_response_code(403);
             echo json_encode(['erro' => 'Token CSRF inválido ou ausente', 'codigo' => 'CSRF_403']);
             exit;
@@ -58,6 +58,11 @@ class CsrfMiddleware
 
         // Rotaciona o token a cada uso para prevenir replay
         $_SESSION[self::CHAVE_SESSAO] = bin2hex(random_bytes(32));
+    }
+
+    public static function tokenValido(string $tokenSessao, string $tokenEnviado): bool
+    {
+        return $tokenSessao !== '' && hash_equals($tokenSessao, $tokenEnviado);
     }
 
     private static function iniciarSessao(): void

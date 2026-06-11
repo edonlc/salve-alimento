@@ -19,7 +19,7 @@ jobs:
         with:
           php-version: '8.2'
           tools: composer
-          extensions: pdo, pdo_mysql, openssl
+          extensions: pdo, pdo_mysql, pdo_sqlite, openssl
 
       - name: Instalar dependências
         run: composer install --no-progress --prefer-dist
@@ -43,7 +43,7 @@ jobs:
         with:
           php-version: '8.2'
           tools: composer, phpunit
-          extensions: pdo, pdo_mysql, openssl
+          extensions: pdo, pdo_mysql, pdo_sqlite, openssl
 
       - name: Instalar dependências
         run: composer install --no-progress --prefer-dist
