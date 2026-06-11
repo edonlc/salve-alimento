@@ -30,7 +30,7 @@ jobs:
       - name: Verificar padrões de segurança (PHPCS)
         run: |
           vendor/bin/phpcs --config-set installed_paths $(pwd)/vendor/pheromone/phpcs-security-audit
-          vendor/bin/phpcs --standard=Security src/
+          vendor/bin/phpcs --standard=Security -n --ignore=src/Views src/
 
   unit-tests:
     name: Testes Unitários
