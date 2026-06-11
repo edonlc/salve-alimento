@@ -10,63 +10,72 @@ use SalveAlimento\Models\Doacao;
 
 class IdorTest extends TestCase
 {
+    private int $idDoador1;
+    private int $idDoador2;
+    private int $idDoacao1;
+    private int $idDoacao2;
+
     protected function setUp(): void
     {
-        $pdo = new \PDO('sqlite::memory:');
-        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-        $pdo->exec("
-            CREATE TABLE doacoes (
-                id INTEGER PRIMARY KEY,
-                id_doador INTEGER,
-                titulo TEXT,
-                descricao TEXT,
-                quantidade TEXT,
-                unidade TEXT,
-                validade TEXT,
-                regiao TEXT,
-                status TEXT DEFAULT 'disponivel',
-                dt_publicacao TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
-        // Usuário 1 é dono da doação 1; usuário 2 é dono da doação 2
-        $pdo->exec("INSERT INTO doacoes (id, id_doador, titulo, status) VALUES (1, 1, 'Arroz 5kg', 'disponivel')");
-        $pdo->exec("INSERT INTO doacoes (id, id_doador, titulo, status) VALUES (2, 2, 'Feijão 2kg', 'disponivel')");
+        $pdo = Database::conexao();
+        $pdo->beginTransaction();
 
-        Database::definirConexao($pdo);
+        $pdo->prepare("
+            INSERT INTO usuarios (cognito_sub, nome, email, perfil, status)
+            VALUES (?, ?, ?, ?, ?)
+        ")->execute(['sub-idor-1', 'Doador Um', 'doador1@test.com', 'doador', 'ativo']);
+        $this->idDoador1 = (int) $pdo->lastInsertId();
+
+        $pdo->prepare("
+            INSERT INTO usuarios (cognito_sub, nome, email, perfil, status)
+            VALUES (?, ?, ?, ?, ?)
+        ")->execute(['sub-idor-2', 'Doador Dois', 'doador2@test.com', 'doador', 'ativo']);
+        $this->idDoador2 = (int) $pdo->lastInsertId();
+
+        $amanha = date('Y-m-d H:i:s', strtotime('+1 day'));
+
+        $pdo->prepare("
+            INSERT INTO doacoes (id_doador, titulo, endereco_retirada, dt_limite_retirada)
+            VALUES (?, ?, ?, ?)
+        ")->execute([$this->idDoador1, 'Arroz 5kg', 'Rua A, 1', $amanha]);
+        $this->idDoacao1 = (int) $pdo->lastInsertId();
+
+        $pdo->prepare("
+            INSERT INTO doacoes (id_doador, titulo, endereco_retirada, dt_limite_retirada)
+            VALUES (?, ?, ?, ?)
+        ")->execute([$this->idDoador2, 'Feijão 2kg', 'Rua B, 2', $amanha]);
+        $this->idDoacao2 = (int) $pdo->lastInsertId();
     }
 
     protected function tearDown(): void
     {
-        Database::resetar();
+        Database::conexao()->rollBack();
     }
 
     public function testDonoAcessaPropriaDoacao(): void
     {
-        // Doacao::pertenceAoDoador() é o ownership check real do projeto
-        $this->assertTrue(Doacao::pertenceAoDoador(id: 1, idDoador: 1));
+        $this->assertTrue(Doacao::pertenceAoDoador($this->idDoacao1, $this->idDoador1));
     }
 
     public function testUsuarioNaoAcessaDoacaoDeOutro(): void
     {
-        // Usuário 2 tenta acessar doação do usuário 1 — IDOR bloqueado
-        $this->assertFalse(Doacao::pertenceAoDoador(id: 1, idDoador: 2));
+        // Doador 2 tenta acessar doação do doador 1 — IDOR bloqueado
+        $this->assertFalse(Doacao::pertenceAoDoador($this->idDoacao1, $this->idDoador2));
     }
 
     public function testIdInexistenteRetornaFalse(): void
     {
-        $this->assertFalse(Doacao::pertenceAoDoador(id: 999, idDoador: 1));
+        $this->assertFalse(Doacao::pertenceAoDoador(999999, $this->idDoador1));
     }
 
     public function testIdNegativoRetornaFalse(): void
     {
-        $this->assertFalse(Doacao::pertenceAoDoador(id: -1, idDoador: 1));
+        $this->assertFalse(Doacao::pertenceAoDoador(-1, $this->idDoador1));
     }
 
     public function testExcluirDoacaoDeOutroUsuarioFalha(): void
     {
-        // Doacao::excluir() internamente verifica ownership: WHERE id = ? AND id_doador = ?
-        $resultado = Doacao::excluir(id: 1, idDoador: 2);
+        $resultado = Doacao::excluir($this->idDoacao1, $this->idDoador2);
 
         $this->assertFalse($resultado, 'Exclusão de doação alheia deve retornar false');
     }
