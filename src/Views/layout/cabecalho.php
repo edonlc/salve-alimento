@@ -34,6 +34,9 @@ $uriAtual = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         <?php elseif ($perfil === 'admin'): ?>
             <a href="/admin" class="<?= str_starts_with($uriAtual, '/admin') ? 'ativo' : '' ?>">Painel Admin</a>
         <?php endif; ?>
+        <?php if ($perfil): ?>
+            <a href="/perfil" class="<?= $uriAtual === '/perfil' ? 'ativo' : '' ?>">Meu Perfil</a>
+        <?php endif; ?>
         <form method="POST" action="/sair" style="margin:0">
             <button type="submit" class="sair-btn">Sair</button>
         </form>
