@@ -33,6 +33,7 @@ $uriAtual = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             <a href="/minhas-solicitacoes" class="<?= $uriAtual === '/minhas-solicitacoes' ? 'ativo' : '' ?>">Minhas Reservas</a>
         <?php elseif ($perfil === 'admin'): ?>
             <a href="/admin" class="<?= str_starts_with($uriAtual, '/admin') ? 'ativo' : '' ?>">Painel Admin</a>
+            <a href="/doacoes" class="<?= $uriAtual === '/doacoes' ? 'ativo' : '' ?>">Doações</a>
         <?php endif; ?>
         <?php if ($perfil): ?>
             <a href="/perfil" class="<?= $uriAtual === '/perfil' ? 'ativo' : '' ?>">Meu Perfil</a>

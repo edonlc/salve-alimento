@@ -13,7 +13,7 @@ openssl genrsa -out "$SCRIPT_DIR/private.pem" 4096
 echo "Extraindo chave pública..."
 openssl rsa -in "$SCRIPT_DIR/private.pem" -pubout -out "$SCRIPT_DIR/public.pem"
 
-chmod 600 "$SCRIPT_DIR/private.pem"
+chmod 640 "$SCRIPT_DIR/private.pem"
 chmod 644 "$SCRIPT_DIR/public.pem"
 
 echo ""

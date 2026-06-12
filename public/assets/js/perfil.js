@@ -44,7 +44,7 @@ document.getElementById('form-perfil').addEventListener('submit', async function
     }
 
     status.style.display = 'block';
-    status.textContent = 'Cifrando dados no navegador...';
+    status.textContent = 'Salvando...';
     status.className = 'alerta alerta-info';
 
     try {
@@ -96,7 +96,7 @@ document.getElementById('form-perfil').addEventListener('submit', async function
         var resultado = await postResp.json();
 
         if (resultado.sucesso) {
-            status.textContent = 'Dados salvos com criptografia híbrida (AES-256-GCM + RSA-OAEP).';
+            status.textContent = 'Dados salvos com sucesso.';
             status.className = 'alerta alerta-sucesso';
             setTimeout(function () { window.location.reload(); }, 1500);
         } else {

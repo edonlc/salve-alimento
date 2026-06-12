@@ -194,4 +194,17 @@ class CognitoService
             'Password'         => $novaSenha,
         ]);
     }
+
+    /**
+     * Troca a senha do usuário autenticado — exige a senha atual (ChangePassword).
+     * $accessToken é o token JWT de acesso armazenado no cookie.
+     */
+    public static function trocarSenha(string $accessToken, string $senhaAtual, string $novaSenha): void
+    {
+        self::chamar('ChangePassword', [
+            'AccessToken'      => $accessToken,
+            'PreviousPassword' => $senhaAtual,
+            'ProposedPassword' => $novaSenha,
+        ]);
+    }
 }

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace SalveAlimento\Controllers;
 
 use SalveAlimento\Middleware\AuthMiddleware;
+use SalveAlimento\Middleware\CsrfMiddleware;
 use SalveAlimento\Models\Usuario;
+use SalveAlimento\Services\CognitoService;
 use SalveAlimento\Services\CryptoService;
+use SalveAlimento\Services\AuditService;
 
 class PerfilController
 {
@@ -31,6 +34,50 @@ class PerfilController
         }
 
         include __DIR__ . '/../Views/perfil.php';
+    }
+
+    public static function trocarSenha(): void
+    {
+        $payload = AuthMiddleware::verificarSessao();
+        CsrfMiddleware::verificar();
+
+        $senhaAtual  = $_POST['senha_atual']      ?? '';
+        $novaSenha   = $_POST['nova_senha']        ?? '';
+        $confirmar   = $_POST['confirmar_senha']   ?? '';
+
+        if (!$senhaAtual || !$novaSenha || $novaSenha !== $confirmar) {
+            $_SESSION['erro_senha'] = 'Preencha todos os campos e confirme a nova senha corretamente.';
+            header('Location: /perfil');
+            exit;
+        }
+
+        if (strlen($novaSenha) < 8) {
+            $_SESSION['erro_senha'] = 'A nova senha deve ter pelo menos 8 caracteres.';
+            header('Location: /perfil');
+            exit;
+        }
+
+        $accessToken = $_COOKIE['access_token'] ?? '';
+
+        if (!$accessToken) {
+            $_SESSION['erro_senha'] = 'Sessão inválida. Faça login novamente.';
+            header('Location: /entrar');
+            exit;
+        }
+
+        try {
+            CognitoService::trocarSenha($accessToken, $senhaAtual, $novaSenha);
+
+            $usuario = Usuario::buscarPorEmail($payload['email'] ?? '');
+            AuditService::registrar('SENHA_ALTERADA', 'usuarios', $usuario['id'] ?? null, null, $usuario['id'] ?? null);
+
+            $_SESSION['sucesso_senha'] = 'Senha alterada com sucesso.';
+        } catch (\RuntimeException) {
+            $_SESSION['erro_senha'] = 'Senha atual incorreta ou nova senha não atende aos requisitos.';
+        }
+
+        header('Location: /perfil');
+        exit;
     }
 
     public static function salvar(): void

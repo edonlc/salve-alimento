@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SalveAlimento\Services;
 
+use phpseclib3\Crypt\PublicKeyLoader;
+use phpseclib3\Crypt\RSA;
+
 class CryptoService
 {
     public static function obterChavePublicaPem(): string
@@ -19,21 +22,25 @@ class CryptoService
     }
 
     /**
-     * Decifra a chave AES enviada pelo frontend (cifrada com RSA-OAEP)
+     * Decifra a chave AES enviada pelo frontend (cifrada com RSA-OAEP SHA-256)
      */
     public static function decifrarChaveAes(string $chaveAesCifradaBase64): string
     {
-        $chavePrivada = self::carregarChavePrivada();
-        $resultado    = '';
+        $caminho  = $_ENV['RSA_PRIVATE_KEY_PATH'] ?? '/var/www/html/keys/private.pem';
+        $conteudo = file_get_contents($caminho);
 
-        $ok = openssl_private_decrypt(
-            base64_decode($chaveAesCifradaBase64),
-            $resultado,
-            $chavePrivada,
-            OPENSSL_PKCS1_OAEP_PADDING
-        );
+        if ($conteudo === false) {
+            throw new \RuntimeException('Chave privada não encontrada');
+        }
 
-        if (!$ok) {
+        $chave = PublicKeyLoader::load($conteudo)
+            ->withPadding(RSA::ENCRYPTION_OAEP)
+            ->withHash('sha256')
+            ->withMGFHash('sha256');
+
+        $resultado = $chave->decrypt(base64_decode($chaveAesCifradaBase64));
+
+        if ($resultado === false) {
             throw new \RuntimeException('Falha ao decifrar chave AES');
         }
 
@@ -78,21 +85,4 @@ class CryptoService
         return base64_encode($iv . $tag . $cifrado);
     }
 
-    private static function carregarChavePrivada(): \OpenSSLAsymmetricKey
-    {
-        $caminho  = $_ENV['RSA_PRIVATE_KEY_PATH'] ?? '/var/www/html/keys/private.pem';
-        $conteudo = file_get_contents($caminho);
-
-        if ($conteudo === false) {
-            throw new \RuntimeException('Chave privada não encontrada');
-        }
-
-        $chave = openssl_pkey_get_private($conteudo);
-
-        if ($chave === false) {
-            throw new \RuntimeException('Chave privada inválida');
-        }
-
-        return $chave;
-    }
 }

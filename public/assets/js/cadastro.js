@@ -36,7 +36,7 @@ document.getElementById('form-cadastro').addEventListener('submit', async functi
     var status  = document.getElementById('status-cadastro');
 
     status.style.display = 'block';
-    status.textContent = 'Cifrando dados pessoais no navegador...';
+    status.textContent = 'Processando cadastro...';
     status.className = 'alerta alerta-info';
     btn.disabled = true;
 

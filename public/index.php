@@ -13,7 +13,8 @@ if (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
-// ── Headers de segurança em toda resposta ──────────────────────────────────
+// ── Headers em toda resposta ───────────────────────────────────────────────
+header('Content-Type: text/html; charset=UTF-8');
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
@@ -73,8 +74,9 @@ match (true) {
     $uri === '/admin/relatorio'   => AdminController::relatorio(),
 
     // Perfil — dados pessoais com criptografia híbrida
-    $uri === '/perfil'         => PerfilController::exibir(),
-    $uri === '/perfil/salvar'  => PerfilController::salvar(),
+    $uri === '/perfil'               => PerfilController::exibir(),
+    $uri === '/perfil/salvar'        => PerfilController::salvar(),
+    $uri === '/perfil/trocar-senha'  => PerfilController::trocarSenha(),
 
     // API — chave pública RSA
     $uri === '/api/chave-publica' => servir_chave_publica(),

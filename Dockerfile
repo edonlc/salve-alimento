@@ -17,6 +17,9 @@ WORKDIR /var/www/html
 
 COPY . .
 
+# Chave privada legível apenas pelo Apache (www-data)
+RUN if [ -f keys/private.pem ]; then chown www-data:www-data keys/private.pem && chmod 640 keys/private.pem; fi
+
 # Aponta DocumentRoot para public/
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' \
     /etc/apache2/sites-available/000-default.conf

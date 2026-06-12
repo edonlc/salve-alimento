@@ -39,7 +39,8 @@ class AdminController
         $payload = AuthMiddleware::verificarSessao();
         RbacMiddleware::exigirAdmin($payload);
 
-        $usuarios = Usuario::listarTodos();
+        $usuarios  = Usuario::listarTodos();
+        $csrfCampo = CsrfMiddleware::campoOculto();
 
         include __DIR__ . '/../Views/admin/usuarios.php';
     }
@@ -50,9 +51,8 @@ class AdminController
         RbacMiddleware::exigirAdmin($payload);
         CsrfMiddleware::verificar();
 
-        $idAlvo   = (int) ($_POST['id'] ?? 0);
-        $adminSub = $payload['sub'] ?? '';
-        $admin    = Usuario::buscarPorSub($adminSub);
+        $idAlvo = (int) ($_POST['id'] ?? 0);
+        $admin  = Usuario::buscarPorEmail($payload['email'] ?? '');
 
         if (!$idAlvo || !$admin) {
             self::erro('Usuário não encontrado.', '/admin/usuarios');
@@ -73,7 +73,7 @@ class AdminController
         CsrfMiddleware::verificar();
 
         $idAlvo = (int) ($_POST['id'] ?? 0);
-        $admin  = Usuario::buscarPorSub($payload['sub'] ?? '');
+        $admin  = Usuario::buscarPorEmail($payload['email'] ?? '');
 
         if (!$idAlvo || !$admin) {
             self::erro('Usuário não encontrado.', '/admin/usuarios');
@@ -100,7 +100,8 @@ class AdminController
         $payload = AuthMiddleware::verificarSessao();
         RbacMiddleware::exigirAdmin($payload);
 
-        $doacoes = Doacao::listarTodas();
+        $doacoes   = Doacao::listarTodas();
+        $csrfCampo = CsrfMiddleware::campoOculto();
 
         include __DIR__ . '/../Views/admin/doacoes.php';
     }
@@ -112,7 +113,7 @@ class AdminController
         CsrfMiddleware::verificar();
 
         $idDoacao = (int) ($_POST['id'] ?? 0);
-        $admin    = Usuario::buscarPorSub($payload['sub'] ?? '');
+        $admin    = Usuario::buscarPorEmail($payload['email'] ?? '');
 
         if (!$idDoacao || !$admin) {
             self::erro('Doação não encontrada.', '/admin/doacoes');
